@@ -1,0 +1,25 @@
+#!?
+
+use base
+
+local plugins= e= this= c=false
+
+_fbold "\n:: Uninstalling plugins..."
+
+for e in $@; do
+  if ! _exist $DMGR_PLUGIN $e; then
+    echo "${e} is not installed."
+    exit 1
+  fi
+
+  this=$DMGR_PLUGINDIR/$e
+  [ -e $this/dmgr-setup ] && . $this/dmgr-setup && uninstall
+  rm -rf $this
+
+  _save $DMGR_PLUGIN ${$(_parse $DMGR_PLUGIN)[@]/#%($e)}
+  echo "$e has been removed."
+  [ $c = false ] && c=true
+done
+
+[ $c = false ] && exit 0
+exit 200

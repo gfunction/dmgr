@@ -1,0 +1,93 @@
+#!/usr/bin/env zsh
+#
+# The dotfile manager (dmgr)
+#
+# Help build and manage your best *nix environment :)
+#
+# @rev    0.10.1
+# @update 2014-11-18
+# @author TADOKORO Saneyuki <saneyan@mail.gfunction.com>
+#
+
+cd $HOME
+
+declare -x MODE=''
+declare -rx DMGR_VERSION="0.10.0"
+declare -rx DMGR_DIST=$(uname -r)
+declare -rx DMGR_CONFDIR=$HOME/.dmgr/conf
+declare -rx DMGR_PLUGINDIR=$HOME/.dmgr/plugins
+declare -rx DMGR_HOOKDIR=$HOME/.dmgr/hooks
+declare -rx DMGR_PATHDIR=$HOME/.dmgr/paths
+declare -rx DMGR_SRCDIR=$HOME/.dmgr/dmgr/src
+declare -rx DMGR_REPODIR=$(cat $DMGR_PATHDIR/_repo)
+declare -rx DMGR_INUSE=$DMGR_CONFDIR/inuse.list
+declare -rx DMGR_SUPPORT=$DMGR_CONFDIR/support.list
+declare -rx DMGR_PLUGIN=$DMGR_CONFDIR/plugin.list
+declare -rx DMGR_OFFICIAL=$DMGR_CONFDIR/official.list
+typeset -Ug path; path=($DMGR_SRCDIR/traps $DMGR_SRCDIR/commands $path)
+
+. $DMGR_SRCDIR/subsets/base.zsh
+. $DMGR_SRCDIR/subsets/debug.zsh
+
+if [[ $0 =~ "dmgr(ctl)?\.debug$" ]]; then
+  declare -rx DMGR_DEBUGMODE=true
+fi
+
+if [[ $0 =~ "dmgr(\.debug)?$" ]]; then
+  declare -rx DMGR_EXEC='dmgr'
+elif [[ $0 =~ "dmgrctl(\.debug)?$" ]]; then
+  declare -rx DMGR_EXEC='dmgrctl'
+fi
+
+function _abort() {
+  echo "Type '${DMGR_EXEC} help' for more help."
+  exit 1
+}
+
+_d "dmgr v${DMGR_VERSION} on DEBUG MODE"
+_d '$0 (dmgr path): '$0
+_d '$1 (dmgr command): '$1
+_d '$2.. (options): '${@:2}
+_d '$DMGR_EXEC: '$DMGR_EXEC
+_d '$DMGR_DIST: '$DMGR_DIST
+_d '$DMGR_CONFDIR: '$DMGR_CONFDIR
+_d '$DMGR_PLUGINIDR: '$DMGR_PLUGINDIR
+_d '$DMGR_HOOKDIR: '$DMGR_HOOKDIR
+_d '$DMGR_INUSE: '$DMGR_INUSE
+_d '$DMGR_SUPPORT: '$DMGR_SUPPORT
+_d '$DMGR_PLUGIN: '$DMGR_PLUGIN
+_d '$DMGR_OFFICIAL: '$DMGR_OFFICIAL
+_d 'Inuse features: ' $(cat $DMGR_INUSE)
+_d 'Support features: ' $(cat $DMGR_SUPPORT)
+_d 'Installed plugins: ' $(cat $DMGR_PLUGIN)
+_d 'Official plugins: ' $(cat $DMGR_OFFICIAL)
+
+if [[ $DMGR_EXEC == 'dmgr' ]]; then
+  case $1 in
+    "has")        _enforce_arg_chk $# '=' 1 && dmgr-has $2 ;;
+    "deals")      _enforce_arg_chk $# '=' 1 && dmgr-deals $2 ;;
+    "installed")  _enforce_arg_chk $# '=' 1 && dmgr-installed $2 ;;
+    "env")        dmgr-env $2 ;;
+    "setup")      dmgr-setup $2 ;;
+    "edit")       dmgr-edit $2 ;;
+    "list")       dmgr-list ;;
+    "reload")     dmgr-reload ;;
+    "help")       dmgr-help ;;
+    *)            _abort ;;
+  esac
+elif [[ $DMGR_EXEC == 'dmgrctl' ]]; then
+  case $1 in
+    "support")    _enforce_arg_chk $# '=' 1 && dmgrctl-support $2 ;;
+    "unsupport")  _enforce_arg_chk $# '=' 1 && dmgrctl-unsupport $2 ;;
+    "enable")     _enforce_arg_chk $# '>=' 1 && dmgrctl-enable ${@:2} ;;
+    "disable")    _enforce_arg_chk $# '>=' 1 && dmgrctl-disable ${@:2} ;;
+    "install")    _enforce_arg_chk $# '>=' 1 && dmgrctl-install ${@:2};;
+    "uninstall")  _enforce_arg_chk $# '>=' 1 && dmgrctl-uninstall ${@:2} ;;
+    "update")     dmgrctl-update ${@:2} ;;
+    "help")       dmgrctl-help; exit $? ;;
+    *)            _abort ;;
+  esac
+
+  # Re-caching configs.
+  $DMGR_SRCDIR/dmgr-reload
+fi

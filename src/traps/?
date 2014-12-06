@@ -1,0 +1,8 @@
+#!/usr/bin/env zsh
+
+use() { source $DMGR_SRCDIR/subsets/$1.zsh; }
+
+DMGR_SUBCMD=$2
+shift
+shift
+source $DMGR_SUBCMD

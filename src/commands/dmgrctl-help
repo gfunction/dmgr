@@ -1,0 +1,21 @@
+#!?
+
+cat <<_EOF_
+dmgrctl v${DMGR_VERSION}
+
+Usage
+
+  dmgrctl <command> (<options>)
+
+Options
+  support   : Support new features.
+  unsupport : Remove features from support list.
+  install   : Install plugins.
+  uninstall : Uninstall plugins.
+  enable    : Enable features. The feature must be supported by dmgr.
+  disable   : Disable features. The feature must be supported by dmgr.
+  update    : Update dmgr and the features.
+  help      : Show help message.
+_EOF_
+
+exit 0

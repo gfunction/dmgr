@@ -1,0 +1,33 @@
+#!?
+
+use base
+
+local official= ctr= item= e= this= c=false
+
+_fbold "\n:: Installing plugins..."
+official=($(_parse $DMGR_OFFICIAL))
+
+for e in $@; do
+  for item in $official; do
+    ctr=($(echo $item | tr -s '=' ' '))
+
+    if [[ ${ctr[1]} == $e ]]; then
+      this=$DMGR_PLUGINDIR/${ctr[1]}
+
+      if [ -e $this ]; then
+        echo "${e} has already installed. Re-install the plugin."
+      else
+        git clone ${ctr[2]} $this
+      fi
+
+      [ -e $this/dmgr-setup ] && . $this/dmgr-setup && install
+
+      _save $DMGR_PLUGIN $plugins $e
+      echo "$e has been installed."
+      [ $c = false ] && c=true
+    fi
+  done
+done
+
+[ $c = false ] && exit 0
+exit 200

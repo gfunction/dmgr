@@ -1,0 +1,50 @@
+#!?
+
+use setup
+
+case $0 in
+  'install')
+    mkdir $HOME/bin
+    _link_repo
+    _link_script
+    touch $HOME/.dmgr/conf/{plugin,inuse}.list
+    echo "Created $(echo ${HOME}/.dmgr/conf/{plugin,inuse}.list)"
+    dmgrctl enable system
+    ;;
+  'clean')
+    dmgrctl disable :all
+    rm -fv $HOME/.dmgr/conf/{plugin,inuse}.list
+    _unlink_script
+    _unlink_repo
+
+    echo -n "Do you want to delete $HOME/bin? (y/n): "
+    while read opt; do
+      [[ "$opt" =~ "y|n" ]] && break
+      echo "Type (y or n): "
+    done
+
+    [ "${opt}" = "y" ] && rm -rfv $HOME/bin
+    ;;
+  'migrate')
+    dmgrctl disable :all:stash
+    _unlink_script
+    _unlink_repo
+    _link_repo
+    _link_script
+    dmgrctl enable :pop
+    ;;
+  *)
+    cat <<_EOF_
+dmgr setup
+
+Usage
+
+  setup <command> (<options>)
+
+Options
+  install : Install dmgr core files and setup dotfiles.
+  clean   : Clean dmgr core files and dotfiles.
+  migrate : Migrate dmgr core files and dotfiles.
+_EOF_
+    ;;
+esac

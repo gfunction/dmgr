@@ -1,0 +1,6 @@
+#!?
+
+use base
+
+_exist $DMGR_INUSE $1
+exit $?

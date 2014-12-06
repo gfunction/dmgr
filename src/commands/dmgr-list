@@ -1,0 +1,19 @@
+#!?
+
+use base
+
+declare -a inuse support enabled
+local e=
+
+inuse=($(_parse $DMGR_INUSE))
+support=($(_parse $DMGR_SUPPORT))
+enabled=($(echo ${inuse[@]}; echo ${support[@]} | sed 's/\s/\n/g' | sort | uniq -d))
+
+echo "Description: * enabled, - disabled"
+
+for e in $enabled; do echo " * ${e}"; done
+for e in $(eval "echo \${support[@]/#%($(echo $enabled | tr -s ' ' '|'))/}"); do
+  echo " - ${e}";
+done
+
+exit 0

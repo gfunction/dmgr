@@ -1,0 +1,44 @@
+#!?
+
+use base
+use hook
+use debug
+use func
+
+declare -a inuse
+local e= c=false
+
+cd $DMGR_REPODIR
+_d "Current directory is $(pwd)"
+
+_fbold ":: Checking for updates..."
+git pull origin master
+
+_fbold "\n:: Updating dotfiles..."
+
+if [ $# -ge 1 ]; then
+  inuse=$@
+else
+  inuse=($(_parse $DMGR_INUSE))
+fi
+
+for e in $inuse; do
+  if ! _exist $DMGR_SUPPORT $e; then
+    echo "${e} is not supported. To support this feature, use 'dmgr support <feature_name>'"
+    continue
+  fi
+
+  if ! _exist $DMGR_INUSE $e; then
+    echo "${e} has already been disabled."
+    continue
+  fi
+
+  [ -f $DMGR_HOOKDIR/$e ] && ! _hook update $DMGR_HOOKDIR/$e ALL &&
+    _reperr "Not successful. Aborted."
+  [ $c = false ] && c=true
+done
+
+echo -e "\nUpdated."
+
+[ $c = false ] && exit 0
+exit 200

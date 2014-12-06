@@ -1,0 +1,38 @@
+#!?
+
+use base
+
+local e= item= config= CONF= SUDO=0
+local desc="As staff (0) or root (1)\tType\tPath"
+
+for e in $(_parse $DMGR_INUSE); do
+  [ -e $DMGR_CONFDIR/paths/$e ] && source $DMGR_CONFDIR/paths/$e
+done
+
+for item in $DMGR_CONFPATH
+do
+  config=($(echo ${item}))
+  if [ "${config[2]}" = "${1}" ]; then
+    CONF=$config[3]; SUDO=$config[1]
+    break
+  fi
+done
+
+if [ "${CONF}" != "" ]; then
+  if [ $SUDO -eq 1 ]; then
+    eval "sudo ${EDITOR} ${CONF}"
+  else
+    eval "${EDITOR} ${CONF}"
+  fi
+  exit 0
+fi
+
+echo -e "Invalid argument value '${1}'\n"
+echo -e $desc
+
+for item in ${DMGR_CONFPATH}
+do
+  config=($(echo ${item}))
+  echo -e "${config[1]}\t${config[2]}\t${config[3]}"
+done
+exit 1

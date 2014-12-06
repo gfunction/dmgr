@@ -1,0 +1,11 @@
+#!?
+
+case $1 in
+  "repo") echo $DMGR_REPODIR;;
+  "plugins") echo $DMGR_PLUGINDIR;;
+  *)
+    echo "Choose from 'repo', 'plugins'"
+    exit 1;;
+esac
+
+exit 0

@@ -1,0 +1,19 @@
+#!?
+
+cat <<_EOF_
+dmgr v${DMGR_VERSION}
+
+Usage
+
+  dmgr <command> (<options>)
+
+Options
+  has       : Check if a feature is enabled.
+  deals     : Check if a feature is supported.
+  installed : Check if a plugin is installed.
+  edit      : Edit a configuration file. The file path is defined in <DMGR_CONFPATH>/core/paths/*.
+  list      : List supported features.
+  help      : Show help message.
+_EOF_
+
+exit 0

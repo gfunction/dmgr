@@ -1,0 +1,12 @@
+#!?
+
+use base
+
+if ! _exist $DMGR_SUPPORT $1; then
+  echo "${1} has not already been supported."
+  exit 1
+fi
+
+_save $DMGR_SUPPORT ${$(_parse $DMGR_SUPPORT)[@]/($1)}
+echo "${1} has not been supported."
+exit 0

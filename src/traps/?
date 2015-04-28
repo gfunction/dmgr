@@ -2,7 +2,17 @@
 
 use() { source $DMGR_SRCDIR/subsets/$1.zsh; }
 
+# Initialize to makea source.
 DMGR_SUBCMD=$2
 shift
 shift
 source $DMGR_SUBCMD
+
+# if [ ??? ]; then
+local value=
+
+for value in $@; do
+  each
+
+done
+# fi

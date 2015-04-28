@@ -2,8 +2,8 @@
 
 use base
 use hook
-use debug
 use func
+use handlers
 
 local e= c=false
 
@@ -19,8 +19,7 @@ for e in $@; do
   fi
 
   # Load and call a hook callback.
-  [ -e $DMGR_HOOKDIR/$e ] && ! _hook disable $DMGR_HOOKDIR/$e ALL &&
-    _reperr "Not successful. Aborted."
+  ! _hook disable $e && _reperr "Not successful. Aborted."
 
   _save $DMGR_INUSE ${$(_parse $DMGR_INUSE)[@]/#%($e)}
   echo "${e} has been disabled."

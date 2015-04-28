@@ -2,30 +2,26 @@
 
 use base
 use hook
-use debug
 use func
+use handlers
 
-local e= c=false
-
-for e in $@; do
-  if ! _exist $DMGR_SUPPORT $e; then
+function each() {
+  if ! _exist $DMGR_SUPPORT $value; then
     echo "${e} is not supported. To support this feature, use 'dmgr support <feature_name>'"
     continue
   fi
 
-  if _exist $DMGR_INUSE $e; then
+  if _exist $DMGR_INUSE $value; then
     echo "${e} has already been enabled."
     continue
   fi
 
   # Load and call a hook callback.
-  [ -e $DMGR_HOOKDIR/$e ] && ! _hook enable $DMGR_HOOKDIR/$e ALL &&
-    _reperr "Not successful. Aborted."
+  ! _hook enable $value && _reperr "Not successful. Aborted."
 
-  _save $DMGR_INUSE $(_parse $DMGR_INUSE) $e
+  _save $DMGR_INUSE $(_parse $DMGR_INUSE) $value
   echo "${e} has been enabled."
-  [ $c = false ] && c=true
-done
+}
 
 [ $c = false ] && exit 0
 exit 200

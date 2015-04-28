@@ -63,3 +63,62 @@ function _enforce_arg_chk() {
   fi
   return 0
 }
+
+#
+# Get original parameter options.
+# @param $1... The command or function arguments.
+#
+function _get_options() {
+  opts=()
+
+  for i in $@; do
+    if [[ $i =~ "^:[a-zA-Z\-_]+" ]]; then
+      opts=($i $opts)
+    fi
+  done
+
+  echo ${opts[@]}
+}
+
+#
+# Dump a install path.
+# @param $1 The destination path.
+#
+function _dump() {
+  echo "$1=$2" >> $DMGR_DUMPDIR/$DMGR_HOOK
+}
+
+#
+# Print install paths and remove the path from dump file.
+#
+function _drop() {
+  echo $DMGR_DUMPDIR/$MODE
+  rm -f $DMGR_DUMPDIR/$MODE
+}
+
+#
+# Define config paths.
+# @param $1... Config paths.
+#
+function _def() {
+  DMGR_CONFPATH=(${@:1} $DMGR_CONFPATH)
+}
+
+#
+# Add debug prefix to message top.
+# #param $1 Message.
+#
+function _d() {
+  local e= c=true
+
+  if [ $DMGR_DEBUGMODE ]; then
+    for e in ${@}; do
+      if [ $c = true ]; then
+        echo -e "\x1B[35mDEBUG\x1B[0m ${e}"
+        c=false
+      else
+        echo -e "\x1B[35m >>> \x1B[0m ${e}"
+      fi
+    done
+  fi
+}

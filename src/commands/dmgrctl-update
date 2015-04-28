@@ -2,8 +2,8 @@
 
 use base
 use hook
-use debug
 use func
+use handlers
 
 declare -a inuse
 local e= c=false

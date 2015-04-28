@@ -1,7 +1,7 @@
 #!?
 
 cat <<_EOF_
-dmgrctl v${DMGR_VERSION}
+dmgr v${DMGR_VERSION}
 
 Usage
 

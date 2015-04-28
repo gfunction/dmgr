@@ -5,7 +5,7 @@ use base
 local official= ctr= item= e= this= c=false
 
 _fbold "\n:: Installing plugins..."
-official=($(_parse $DMGR_OFFICIAL))
+official=($(cat $DMGR_OFFICIAL))
 
 for e in $@; do
   for item in $official; do

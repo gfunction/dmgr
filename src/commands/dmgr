@@ -11,9 +11,10 @@
 
 cd $HOME
 
-declare -x MODE=''
+declare -x DMGR_HOOK='' # Modified in hook.zsh
 declare -rx DMGR_VERSION="0.10.0"
 declare -rx DMGR_DIST=$(uname -r)
+declare -rx DMGR_DUMPDIR=$HOME/.dmgr/dumps
 declare -rx DMGR_CONFDIR=$HOME/.dmgr/conf
 declare -rx DMGR_PLUGINDIR=$HOME/.dmgr/plugins
 declare -rx DMGR_HOOKDIR=$HOME/.dmgr/hooks
@@ -26,19 +27,26 @@ declare -rx DMGR_PLUGIN=$DMGR_CONFDIR/plugin.list
 declare -rx DMGR_OFFICIAL=$DMGR_CONFDIR/official.list
 typeset -Ug path; path=($DMGR_SRCDIR/traps $DMGR_SRCDIR/commands $path)
 
+# Load base subset
 . $DMGR_SRCDIR/subsets/base.zsh
-. $DMGR_SRCDIR/subsets/debug.zsh
 
+# Check if the command is executed with debug mode.
+# Change debug mode if '.debug' is appended as suffix.
 if [[ $0 =~ "dmgr(ctl)?\.debug$" ]]; then
   declare -rx DMGR_DEBUGMODE=true
 fi
 
+# Decide the executive mode.
 if [[ $0 =~ "dmgr(\.debug)?$" ]]; then
   declare -rx DMGR_EXEC='dmgr'
 elif [[ $0 =~ "dmgrctl(\.debug)?$" ]]; then
   declare -rx DMGR_EXEC='dmgrctl'
 fi
 
+#
+# Abort executing with error.
+# @exit 1 An error
+#
 function _abort() {
   echo "Type '${DMGR_EXEC} help' for more help."
   exit 1
@@ -68,7 +76,6 @@ if [[ $DMGR_EXEC == 'dmgr' ]]; then
     "deals")      _enforce_arg_chk $# '=' 1 && dmgr-deals $2 ;;
     "installed")  _enforce_arg_chk $# '=' 1 && dmgr-installed $2 ;;
     "env")        dmgr-env $2 ;;
-    "setup")      dmgr-setup $2 ;;
     "edit")       dmgr-edit $2 ;;
     "list")       dmgr-list ;;
     "reload")     dmgr-reload ;;
@@ -88,6 +95,6 @@ elif [[ $DMGR_EXEC == 'dmgrctl' ]]; then
     *)            _abort ;;
   esac
 
-  # Re-caching configs.
-  $DMGR_SRCDIR/dmgr-reload
+  # Re-caching configs if sub command runs successfully.
+  [ $? = 0 ] && dmgr-reload
 fi

@@ -11,8 +11,8 @@ function _link() {
     else
       dst=$HOME/.$(echo $1 | sed "s/@//")
     fi
-    [ $DMGR_DEBUGMODE ] &&
-      ln -sv $src $dst || ln -s $src $dst
+    [ $DMGR_DEBUGMODE ] && ln -sv $src $dst || ln -s $src $dst
+    _dump link $dst
   else
     echo "Too many arguments."
     return 1
@@ -51,6 +51,13 @@ function _unlink() {
 }
 
 #
+# Unlink symlinks.
+# @param $1 Original file path.
+#
+function _unlink() {
+}
+
+#
 # Make symlinks for scripts in ./bin
 # @param $1... The script name.
 #
@@ -81,4 +88,50 @@ function _unuse() {
       rm -f $HOME/bin/$e
     fi
   done
+}
+
+#
+# Install a plugin.
+# @param $1... The plugin name.
+#
+function _install() {
+  dmgrctl-install $@
+}
+
+#
+# Uninstall a plugin.
+# @param $1... The plugin name.
+#
+function _uninstall() {
+  dmgrctl-uninstall $@
+}
+
+#
+# Copy a file or directory.
+# @param $1 The source path.
+# @param $2 The destination path.
+#
+function _copy() {
+  cp -r $1 $2
+  [ $? = 0 ] && _dump copy $1
+}
+
+#
+# Echo a message.
+#
+function _echo() {
+  echo ${@:1}
+}
+
+#
+# Execute a command line
+#
+function _run() {
+  eval ${@:1}
+}
+
+#
+# Clean using files.
+#
+function _clean() {
 }

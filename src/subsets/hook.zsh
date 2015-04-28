@@ -4,78 +4,135 @@
 # @param $2... Commands which this function can call.
 #
 declare -ix REC=0
-declare -Ax DMGR_TMP_SCRIPT
-DMGR_TMP_SCRIPT=(1 /tmp/dmgr-tmp-script 2 /tmp/dmgr-tmp-script-nested)
-readonly DMGR_TMP_SCRIPT
+declare -Ax MODE
+declare -Ax HOOK
+declare -Ax TMP_SCRIPT
+TMP_SCRIPT=(1 /tmp/dmgr-tmp-script 2 /tmp/dmgr-tmp-script-nested)
+readonly TMP_SCRIPT
 
-_hook() {
-  local line= reg= args= ac= e=
+#
+# Operate rec value.
+#
+_rec() {
+  case $1 in
+    'enter') REC=$(($REC + 1));;
+    'quit') REC=$(($REC - 1));
+  esac
+}
+
+#
+# Set local environment variales.
+# @param $1 env name
+# @param $2 env value
+#
+_set() {
+  case $1 in
+    'mode') MODE[$REC]=$2 ;;
+    'hook') HOOK[$REC]=$2
+            DMGR_HOOK=$2 ;;
+  esac
+}
+
+#
+# Get local environment value.
+# @param $1 env name
+#
+_get() {
+  case $1 in
+    'hook') echo $HOOK[$REC] ;;
+    'hookfile') echo $DMGR_HOOKDIR/$HOOK[$REC] ;;
+    'scriptfile') echo $TMP_SCRIPT[$REC] ;;
+  esac
+}
+
+#
+# Check if the current hook is nested or not.
+# @return true or false
+#
+_is_nested() {; [ $REC = 2 ]; }
+
+#
+# Start and switch to next status.
+# @param $1 mode name
+# @param $2 hook name
+#
+_hook_start() {
+  _rec enter
+  _set mode $1
+  _set hook $2
+
+  local script=$(_get scriptfile)
+
+  # Make a new scriptfile or refresh a current scriptfile.
+  echo '' > $script
+
+  # Change file name mode for security.
+  chmod 600 $script
+}
+
+#
+# Switch to previous status before finishing hooking.
+#
+_hook_end() {
+  local script=$(_get scriptfile)
+
+  # Load a current scriptfile and remove it.
+  . $script
+  rm -f $script
+
+  _rec quit
+  
+  # Revert previous hook name.
+  _set hook $(_get hook)
+}
+
+#
+# Write temporary scripts.
+# @param $1 mode
+# @param $2 hookfile
+#
+_write_tmp_script() {
+  local line=
   local mode="null"
-  REC=$(($REC + 1))
-
-  if [ $# -le 2 ]; then
-    echo "Too few arguments."
-    return 1
-  fi
-
-  if [ -e $DMGR_TMP_SCRIPT[$REC] ]; then
-    echo '' > $DMGR_TMP_SCRIPT[$REC]
-  else
-    touch $DMGR_TMP_SCRIPT[$REC]
-  fi
-  chmod 600 $DMGR_TMP_SCRIPT[$REC]
-
-  for e in ${@:3}; do
-    ac=$ac$(echo $e |
-      sed "s/^ALL$/a/" |
-      sed "s/^ECHO$/e/" |
-      sed "s/^RUN$/r/" |
-      sed "s/^LINK$/l/" |
-      sed "s/^UNLINK$/u/" |
-      sed "s/^USE$/s/" |
-      sed "s/^UNUSE$/n/" |
-      sed "s/^REARCH$/c/")
-  done
-
-  if [ $REC = 2 ]; then
-    echo -e "==> NESTED HOOK <${1}>: ${2}"
-  else
-    MODE=$1
-    echo -e "\x1B[32mHOOK <${1}>: ${2}\x1B[0m"
-  fi
+  local script=$(_get scriptfile)
 
   cat $2 | while read line; do _d $line
     if [[ $line =~ "\[[a-z]+\]" ]]; then
       [ $line = "[$1]" ] && mode=$1 || mode="null"
+
     elif [ $mode != "null" ]; then
-      if [[ $line =~ "^ECHO\s" ]]   && [[ $ac =~ "a|e" ]]; then
-        echo $line | sed "s/^ECHO/echo/" >> $DMGR_TMP_SCRIPT[$REC]
-      elif [[ $line =~ "^RUN\s" ]]      && [[ $ac =~ "a|r" ]]; then
-        echo $line | sed "s/^RUN//" >> $DMGR_TMP_SCRIPT[$REC]
-      elif [[ $line =~ "^REARCH\s" ]] && [[ $ac =~ "a|c" ]]; then
-        e=($(echo $line))
-        cmd="s,^REARCH ${e[2]} "${e:2}",_hook ${e[2]} ${2} "${e:2}","
-        echo $line | sed $cmd >> $DMGR_TMP_SCRIPT[$REC]
-      elif [[ $line =~ "^LINK\s" ]]   && [[ $ac =~ "a|l" ]]; then
-        echo $line | sed "s/^LINK/_link/" >> $DMGR_TMP_SCRIPT[$REC]
-      elif [[ $line =~ "^UNLINK\s" ]] && [[ $ac =~ "a|u" ]]; then
-        echo $line | sed "s/^UNLINK/_unlink/" >> $DMGR_TMP_SCRIPT[$REC]
-      elif [[ $line =~ "^USE" ]] && [[ $ac =~ "a|s" ]]; then
-        echo $line | sed "s/^USE/_use/" >> $DMGR_TMP_SCRIPT[$REC]
-      elif [[ $line =~ "^UNUSE" ]] && [[ $ac =~ "a|n" ]]; then
-        echo $line | sed "s/^UNUSE/_unuse/" >> $DMGR_TMP_SCRIPT[$REC]
-      elif [[ $line =~ "^(if|elif|else|fi|then|for|do|done)" ]]; then
-        echo $line >> $DMGR_TMP_SCRIPT[$REC]
+      if [[ $line =~ "^(if|elif|else|fi|then|for|do|done)" ]] || [[ $line =~ "^[A-Z]+\s" ]]; then
+        echo $line >> $script
       fi
     fi
   done
+}
 
-  . $DMGR_TMP_SCRIPT[$REC]
-  rm -f $DMGR_TMP_SCRIPT[$REC]
+#
+# Hook handlers.
+# @param $1 mode
+# @param $2 hook name
+#
+_hook() {
+  _hook_start $1 $2
 
-  REC=$(($REC - 1))
+  local hookfile=$(_get hookfile)
 
-  [ $REC = 0 ] && MODE=''
+  # The hook function must not be executed under no hookfile.
+  if ! [ -e $hookfile ]; then
+    echo "No such hookfile. Passed."
+    return 200
+  fi
+
+  if _is_nested; then
+    echo -e "==> NESTED HOOK <${1}>: ${hookfile}"
+  else
+    echo -e "\x1B[32mHOOK <${1}>: ${hookfile}\x1B[0m"
+  fi
+
+  _write_tmp_script $1 $hookfile
+
+  _hook_end
 
   return 0
 }
